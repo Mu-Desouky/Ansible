@@ -1,0 +1,109 @@
+---
+
+- name: Ensure Nginx is installed
+  apt:
+    state: installed
+    name: nginx
+
+- name: Ensure Nginx server is enabled and started
+  service:
+    name: nginx
+    state: started
+    enabled: true
+
+- name: Redmine user
+  user: 
+    name: redmine
+
+- name: Check whether Redmine is already downloaded
+  stat: path={{ redmine_home }}
+  register: redmine_cat
+
+- name: Download Redmine
+  get_url:
+    url=http://www.redmine.org/releases/redmine-{{ redmine_version }}.tar.gz
+    dest=/home/redmine/
+  become: true
+  become_user: redmine
+  when: redmine_cat.stat.exists == False
+
+- name: redmine directory
+  file:
+    path: /home/redmine/redmine
+    state: directory
+  when: redmine_cat.stat.exists == False
+  become: true
+  become_user: redmine
+
+- name: Unpack Redmine source tarball
+  unarchive:
+    src: /home/redmine/redmine-{{ redmine_version }}.tar.gz
+    dest: /home/redmine/
+    copy: no
+  become: true
+  become_user: redmine
+  when: redmine_cat.stat.exists == False
+
+- name: copy source files to target directory
+  shell: "mv /home/redmine/redmine-{{ redmine_version }}/* /home/redmine/redmine/"
+  become: true
+  become_user: redmine
+  when: redmine_cat.stat.exists == False
+
+- name: Install bundler
+  command: chdir=/home/redmine/redmine gem install bundler 
+
+- name: Redmine database configuration file
+  template:
+    src: database.yml
+    dest: "{{ redmine_home }}/config/"
+  become: true
+  become_user: redmine
+
+- name: install dependencies
+  apt: name={{ item }} state=installed
+  with_items: 
+    - build-essential
+    - patch
+    - ruby-dev 
+    - zlib1g-dev
+    - liblzma-dev
+    - libmysqlclient-dev
+    - imagemagick
+    - libmagickwand-dev
+    - libmagickcore-dev
+  become: yes
+
+- name: Local gemfile
+  template:
+    src: Gemfile.local
+    dest: "{{ redmine_home }}"
+  become: true
+  become_user: redmine
+
+- name: set permissions
+  shell: "chown -R redmine:redmine /home/redmine/redmine"
+  become: true
+
+- name: manual gem install
+  shell: "gem install nokogiri mysql2 raindrops redcarpet rmagick"
+  args:
+    chdir: "{{ redmine_home }}"
+  become: true
+
+- name: install gems
+  command: chdir=/home/redmine/redmine bundle install
+
+- name: Generate secret token
+  become: true
+  become_user: redmine
+  shell: bundle exec rake generate_secret_token
+  args: 
+    chdir: "{{ redmine_home }}"
+
+- name: db migrate
+  become: true
+  become_user: redmine
+  shell: RAILS_ENV=production bundle exec rake db:migrate
+  args:
+    chdir: "{{ redmine_home }}"

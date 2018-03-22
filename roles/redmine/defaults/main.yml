@@ -1,0 +1,10 @@
+redmine_version: "3.4.4"
+# redmine_home: "/home/redmine/redmine-{{ redmine_version }}"
+redmine_home: "/home/redmine/redmine"
+
+redmine_bundler_version: "1.16"
+redmine_sql_database_name: "redmine"
+redmine_sql_database_host: "localhost"
+redmine_sql_driver: "mysql2"
+redmine_sql_username: "redmine"
+redmine_sql_password: "redmine"

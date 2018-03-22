@@ -1,0 +1,13 @@
+---
+- name : Redmine/Nginx/MySQL Playbook
+  hosts : all
+  become : yes
+  remote_user : ubuntu
+
+
+  roles :
+    - common
+    - nginx
+    - mysql
+    - ruby
+    - redmine

@@ -1,0 +1,10 @@
+---
+
+- name: be sure ntp is installed
+  apt: name=ntp state=installed
+
+- name: be sure ntpd is running and enabled
+  service: name=ntp state=started enabled=yes
+
+- name: install python
+  apt: name=python state=installed

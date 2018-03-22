@@ -1,0 +1,18 @@
+---
+
+mysql_pkgs:
+  - python-selinux
+  - mysql-server
+  - python-mysqldb
+
+mysql_root_user: root
+
+mysql_root_password: password
+
+mysql_db:
+     - name: redmine
+
+mysql_users:
+     - name: redmine
+       pass: redmine
+       priv: "redmine.*:ALL"
